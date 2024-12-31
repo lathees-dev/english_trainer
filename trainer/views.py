@@ -21,6 +21,12 @@ def home(request):
 def grammar_options(request):
     return render(request, 'trainer/grammar_options.html')
 
+def vocab_options(request):
+    return render(request, 'trainer/vocab_options.html')
+
+def vocab_learn(request):
+    return render(request, 'trainer/v_learn.html')
+
 def exercise_options(request, exercise_type):
     context = {'exercise_type': exercise_type}
     return render(request, 'trainer/exercise_options.html', context)
@@ -83,6 +89,19 @@ def generate_question(question_type):
                 "options": ["She said that she was going to the market.", "She said she is going to the market.", "She said she will go to the market.", "She told that she is going to the market."],
                 "correct_answer": "She said that she was going to the market."
             }
+    
+        """
+        
+    elif question_type == 'vocabulary':  # New vocabulary question type
+        prompt = """
+          Act as an English teacher. Generate a multiple-choice question to test vocabulary knowledge.
+          Provide a sentence with a missing word and multiple options, ensuring the correct answer is a commonly used word in English vocabulary.
+          Generate a question in the below JSON format:
+          {
+              "sentence": "The chef prepared a _____ meal for the guests.",
+              "options": ["delicious", "happy", "angry", "unprepared"],
+              "correct_answer": "delicious"
+          }
         """
 
     else:
@@ -119,6 +138,7 @@ def generate_question(question_type):
     except Exception as e:
         print("Unexpected error:", e)
         return None
+
 
 def handle_post_request(request, question_type):
     action = request.POST.get('action')
@@ -174,9 +194,18 @@ def direct_indirect(request):
     question_data = generate_question('direct_indirect')
     return render(request, 'trainer/direct_indirect.html', {'question': question_data})
 
+
+def vocabulary(request):
+    if request.method == "POST":
+        return handle_post_request(request, "vocabulary")  # Use helper
+    question_data = generate_question("vocabulary")
+    return render(request, "trainer/vocabulary.html", {"question": question_data})
+
+
 def learn_exercise(request, exercise_type):
     template_name = f"trainer/L_{exercise_type.capitalize()}.html"
     return render(request, template_name)
+<<<<<<< HEAD
 
 def generate_fillup_question(question_type):
     if question_type == 'preposition':
@@ -289,3 +318,5 @@ def fillup(request, question_type):
              return handle_fillup_post_request(request,question_type)
         question_data = generate_fillup_question(question_type)
         return render(request, 'trainer/fillup.html', {'question': question_data})
+=======
+>>>>>>> 831955d4985cb48af0d440ced35aff2ce48021e1
