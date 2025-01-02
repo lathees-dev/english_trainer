@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Results</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}"> 
+
+    <style>
+        /* Overall container styling */
+        .result_container {
+            width: 80%;
+            margin: 0 auto; /* Center the container */
+            font-family: Arial, sans-serif; /* Clean font */
+            background: linear-gradient(135deg, #fff8e1, #ffe082); /* Light yellow gradient background */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header styling */
+        h1 {
+            background-color: #ffca28; /* Bright yellow for header */
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #333;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        /* Style for the individual question and analysis block */
+        .question-block {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #ffffff; /* White background for clarity */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-item {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .result-item strong {
+            color: #ffb300; /* Golden yellow for emphasis */
+        }
+        
+        .result-item em {
+            color: #555;
+        }
+        
+        /* Table styling for analysis */
+        table {
+            width: 100%;
+            margin: 15px 0;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #ffe082; /* Light yellow for header */
+            font-weight: bold;
+        }
+        
+        td:last-child {
+            text-align: right; /* Right-align the last column */
+        }
+        
+        /* Styling for ratings and final results */
+        .average-ratings-table, .final-rating-container {
+            margin-top: 20px;
+        }
+        
+        .final-rating-container {
+            text-align: center;
+            background: linear-gradient(135deg, #fffde7, #fff9c4); /* Light cream-yellow gradient */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .final-rating-container h2 {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .overall-feedback {
+            padding: 20px;
+            background-color: #fffde7; /* Very light yellow background */
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button styling */
+        .btn-primary {
+            display: inline-block;
+            padding: 12px 20px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #ffca28, #ffb300); /* Bright yellow gradient */
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ffb300, #ffca28); /* Reversed gradient on hover */
+            transform: scale(1.05);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .result_container {
+                width: 95%; /* Full width on smaller screens */
+                padding: 15px;
+            }
+        
+            table th, table td {
+                padding: 8px; /* Smaller padding for smaller screens */
+            }
+        
+            .btn-primary {
+                padding: 10px 15px;
+            }
+        
+            .final-rating-container h2 {
+                font-size: 1.3em; /* Adjust font size */
+            }
+        }
+        
+        
+        </style>
+        
+    
+</head>
+<body>
+    <div class="result_container">
+        <h1>Interview Summary</h1>
+
+        {% for response in interview_responses %}
+            <div class="question-block">
+                <div class="result-item">
+                    <strong>Q{{ forloop.counter }}: {{ response.question }}</strong><br>
+                    <em>A: {{ response.answer }}</em>
+                </div>
+
+                <h2>Analysis for Question {{ response.index }}:</h2>
+                <div class="results-list">
+                    <table border=1>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Rating</th>
+                                <th>Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for analysis_data in analysis_results_by_question %}
+                            {% if analysis_data.question_number == response.index %}  <!-- Match question number -->
+                                {% for category, rating, explanation in analysis_data.analysis_results %}
+                                    <tr>
+                                        <td>{{ category }}</td>
+                                        <td>{{ rating }}</td>
+                                        <td>{{ explanation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <br>  <!-- Spacing between question blocks -->
+        {% endfor %}
+
+        <div class="average-ratings-table">
+            <h2>Average Ratings:</h2>
+            {{ average_ratings_table|safe }}
+        </div>
+        <br>
+
+        <div class="final-rating-container">
+            <h2>Final Rating</h2>
+            <p><strong>{{ final_rating }} / 10</strong></p> 
+        </div>
+        <br>
+
+        <h2>Overall Feedback:</h2>
+        <div class="overall-feedback">{{ overall_feedback|safe }}</div>
+    </div>
+</body>
+</html>

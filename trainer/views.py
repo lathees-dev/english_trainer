@@ -542,11 +542,9 @@ def generate_speaking_statement(request):
      try:
          response = model.generate_content(prompt)
          statement = response.text.strip()
-
           # Clean the statement 
          statement = re.sub(r'#.*', '', statement).strip()
          return JsonResponse({'statement': statement})
      except Exception as e:
          print("Error generating speaking statement:", e)
          return JsonResponse({'error': 'Failed to generate statement.'}, status=500)
-
