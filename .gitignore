@@ -12,3 +12,5 @@
     # OS generated files
     .DS_Store
     Thumbs.db
+
+find . | grep -E "(__pycache__|\.pyc|\.pyo$|\.pyd$|\.env|venv|env|\.DS_Store|Thumbs.db)" | xargs rm -rf
