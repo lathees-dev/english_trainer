@@ -30,19 +30,19 @@ def signup(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
-
+        
         # Check if user exists
         if collection.find_one({"username": username}):
             messages.error(request, "Username already exists!")
             return redirect("signup")
-
+        
         # Hash the password and save user
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
         collection.insert_one({"username": username, "password": hashed_pw})
         messages.success(request, "Signup successful! Please login.")
         return redirect("login")
 
-    return render(request, "signup.html")
+    return render(request, "trainer/signup.html")
 
 
 # Login view
@@ -60,7 +60,7 @@ def login(request):
             messages.error(request, "Invalid credentials!")
             return redirect("login")
 
-    return render(request, "login.html")
+    return render(request, "trainer/login.html")
 
 
 def home(request):

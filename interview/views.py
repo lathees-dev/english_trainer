@@ -874,14 +874,15 @@ def question(request, interview_type):
     })
 
 def results(request):
-        from pymongo import MongoClient
-        from django.conf import settings
-        from bson.objectid import ObjectId
+       
 
         # MongoDB setup
         client = MongoClient('mongodb://localhost:27017/')
         db = client['AI_interview']
         results_collection = db['interview_results']
+        
+        english_trainer_db = client['english_trainer']
+        interview_collection = english_trainer_db['interview']
 
         # Retrieve session data
         interview_data = request.session.get('interview_data', [])
@@ -943,6 +944,14 @@ def results(request):
         except Exception as e:
             logging.error(f"Error saving to MongoDB: {e}")
             messages.error(request, "Failed to save results.")
+               
+         # Insert average_ratings_table into english_trainer interview collection
+        try:
+            interview_collection.insert_one({'average_ratings_table': average_ratings_data})
+            logging.info("Average ratings table saved to english_trainer database successfully.")
+        except Exception as e:
+            logging.error(f"Error saving average_ratings_table to english_trainer: {e}")
+            messages.error(request, "Failed to save average ratings table to english trainer database.")
 
         context = {
             'interview_responses': interview_data,
@@ -953,7 +962,7 @@ def results(request):
         }
         return render(request, 'hr_interview/results.html', context)
 
-def home(request):
+def interview_home(request):
         return render(request, 'hr_interview/home.html')
 
 def ai_interview_options(request):
