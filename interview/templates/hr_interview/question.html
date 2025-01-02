@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Interview Question</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <style>
+        /* Global styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #fff9e3, #fce28c); /* Light yellow gradient background */
+        }
+        
+        /* Split screen styles */
+        .split-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            background-color: #ffffff; /* White split screen background for contrast */
+        }
+        
+        /* Left and Right Box Styling */
+        .left-box, .right-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 45%;
+            padding: 30px;
+            box-sizing: border-box;
+            background: #fffef2; /* Light cream background */
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .left-box:hover, .right-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Video container styling */
+        .video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 450px; /* Limit max size */
+            height: auto;
+            background: #fffbe6; /* Very light yellow background for video */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #videoFeed {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        /* Form styling */
+        .question-card {
+            width: 100%;
+            padding: 25px;
+            background: #fff8dc; /* Light goldenrod background for form */
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        label {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fffaf0; /* Subtle yellow background */
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #f5c518; /* Bright yellow border */
+            background: #fff; /* White background when focused */
+            box-shadow: 0 0 8px rgba(245, 197, 24, 0.4); /* Subtle yellow glow */
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            background: linear-gradient(90deg, #f6d365, #fda085); /* Dark yellow-orange gradient */
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background: linear-gradient(90deg, #fda085, #f6d365); /* Reverse gradient for hover */
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: scale(0.97);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Status message styling */
+        #status-message {
+            margin-top: 20px;
+            font-style: italic;
+            color: #333;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        #status-message.error {
+            color: red;
+        }
+        
+        #status-message.success {
+            color: #f5a623; /* Bright yellow-orange for success */
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .split-screen {
+                flex-direction: column;
+                padding: 10px;
+            }
+        
+            .left-box, .right-box {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        
+            .video-container {
+                width: 90%;
+                max-width: 300px;
+            }
+        
+            .question-card {
+                width: 95%;
+            }
+        }
+                
+        
+        
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script> <! -- Add this -->
+</head>
+<body>
+    <div class="split-screen">
+        <div class="video-container">
+            <img src="{% url 'interview:video_feed' %}" alt="Video Feed" id="videoFeed" width="100%">
+        </div>
+        <div class="left-box">
+            <div class="container">
+                <div class="question-card">
+                    <h2>Interview Question</h2>
+                    <form id="question-form" action="{% url 'interview:question' interview_type %}" method="POST">
+                        {% csrf_token %}
+                        <p class="question-text">{{ question }}</p>
+                        <label for="answer">Your Answer:</label>
+                        <input type="text" id="answer" name="answer" required>
+                        <button type="submit">Submit</button>
+                    </form>
+                    <p id="status-message"></p>
+                </div>
+            </div>
+            <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const questionText = document.querySelector(".question-text");
+    const answerInput = document.getElementById("answer");
+    const statusMessage = document.getElementById("status-message");
+    const form = document.getElementById("question-form");
+    const interviewType = "{{ interview_type }}";
+
+    const recognition = new (window.SpeechRecognition || webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    let questionSpoken = false;
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let cameraStream = null; // Store camera stream
+
+    async function startRecording() {
+        try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio:true }); // Store the stream
+            const combinedStream = new MediaStream([...screenStream.getTracks(), ...cameraStream.getTracks()]);
+            document.getElementById('videoFeed').srcObject = cameraStream; // Use cameraStream
+
+            mediaRecorder = new MediaRecorder(combinedStream);
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) recordedChunks.push(event.data);
+            };
+            mediaRecorder.start();
+
+            speakQuestion(questionText.textContent);
+        } catch (error) {
+            console.error("Error accessing media devices:", error);
+            // Handle error, e.g., display a message to the user
+
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+
+           
+            const tracks = document.getElementById('videoFeed').srcObject.getTracks(); 
+            tracks.forEach(track => track.stop());
+
+            convertToMp4();
+        }
+    }
+
+    function convertToMp4() {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const fileReader = new FileReader();
+        fileReader.onload = async () => {
+                const inputBuffer = new Uint8Array(fileReader.result);
+                const ffmpeg = new FFmpeg();
+                await ffmpeg.load(); // Ensure ffmpeg is loaded
+                ffmpeg.FS('writeFile', 'input.webm', inputBuffer);
+                await ffmpeg.run('-i', 'input.webm', '-c:v', 'libx264',  'output.mp4');
+                const outputBuffer = ffmpeg.FS('readFile', 'output.mp4');
+                const url = URL.createObjectURL(new Blob([outputBuffer.buffer], { type: 'video/mp4' }));
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'interview_recording.mp4';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
+            fileReader.readAsArrayBuffer(blob);
+        
+
+    }
+
+    function speakQuestion(text) {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.lang = "en-US";
+        speech.onend = () => {
+            questionSpoken = true;
+            startRecognition();
+        };
+        speechSynthesis.speak(speech);
+    }
+
+    function startRecognition() {
+        if (questionSpoken) {
+            statusMessage.textContent = "Listening...";
+            recognition.start();
+        }
+    }
+
+    function restartRecognition() {
+        recognition.stop();
+        startRecognition();
+    }
+
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.trim();
+        if (transcript) {
+            answerInput.value = transcript;
+            statusMessage.textContent = "";
+            submitForm();
+        } else {
+            statusMessage.textContent = "Listening ...";
+            restartRecognition();
+        }
+    };
+
+    function submitForm() {
+        const formData = new FormData(form);
+                        for (const pair of formData.entries()) {
+                            console.log(pair[0]+ ', ' + pair[1]); 
+                        }
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                           
+                            if (data.message === 'Interview complete') {
+                                statusMessage.textContent = "All questions completed. Redirecting...";
+                                window.location.href = data.redirect;
+                            } else if (data.question) {
+                                if (data.question === "Please provide an answer.") {
+                                    statusMessage.textContent = data.question;
+                                } else {
+                                    questionText.textContent = data.question;
+                                    answerInput.value = "";
+
+                                    // Start speaking the new question after it's loaded
+                                    speakQuestion(data.question);
+                                    questionSpoken = false;
+                                    startRecognition();
+                                }
+                            } else {
+                                statusMessage.textContent = "An unexpected error occurred.";
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Fetch Error:", error);
+                            statusMessage.textContent = "An error occurred during submission.";
+                        });
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        submitForm();
+    }
+
+    form.addEventListener("submit", handleFormSubmit);
+    recognition.onend = () => {
+                        if (!answerInput.value) {
+                           statusMessage.textContent = "Listening ...";
+                           restartRecognition();
+                        }
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error("Recognition Error:", event.error);
+                        statusMessage.textContent = "Listening...";
+                       restartRecognition();
+                    };
+
+                    window.addEventListener("beforeunload", stopRecording);
+                    startRecording(); //start recording
+
+                });
+
+            </script>
+
+        </div>
+    </div>
+</body>
+</html>
