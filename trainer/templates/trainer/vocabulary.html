@@ -119,18 +119,19 @@
             // Disable all buttons after selection
             const buttons = document.querySelectorAll('.option-button');
             buttons.forEach(btn => btn.disabled = true);
-    
-            // Mark correct/incorrect
             const messageDiv = document.querySelector('.message');
             const actionsDiv = document.querySelector('.actions');
+            const explanation = '{{ question.explanation|escapejs }}';
+       
             if (selectedAnswer === correctAnswer) {
                 button.classList.add('correct');
-                messageDiv.textContent = "Correct! Great job!";
+                messageDiv.innerHTML = `Correct! Great job!<br><br>Explanation: ${explanation}`;
                 actionsDiv.style.display = "block";
                 document.getElementById('try-again-form').style.display = "none";
+       
             } else {
                 button.classList.add('incorrect');
-                messageDiv.textContent = `Wrong! The correct answer is '${correctAnswer}'.`;
+                messageDiv.innerHTML = `Wrong! The correct answer is '${correctAnswer}'.<br><br>Explanation: ${explanation}`;
                 actionsDiv.style.display = "block";
             }
         }
