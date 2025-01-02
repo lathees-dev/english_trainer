@@ -205,7 +205,6 @@ def vocabulary(request):
 def learn_exercise(request, exercise_type):
     template_name = f"trainer/L_{exercise_type.capitalize()}.html"
     return render(request, template_name)
-<<<<<<< HEAD
 
 def generate_fillup_question(question_type):
     if question_type == 'preposition':
@@ -318,5 +317,3 @@ def fillup(request, question_type):
              return handle_fillup_post_request(request,question_type)
         question_data = generate_fillup_question(question_type)
         return render(request, 'trainer/fillup.html', {'question': question_data})
-=======
->>>>>>> 831955d4985cb48af0d440ced35aff2ce48021e1
