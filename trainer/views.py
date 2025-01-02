@@ -579,3 +579,21 @@ def fillup(request, question_type):
              return handle_fillup_post_request(request,question_type)
         question_data = generate_fillup_question(question_type)
         return render(request, 'trainer/fillup.html', {'question': question_data})
+
+def speaking(request):
+     """Renders the speaking exercise page."""
+     return render(request, 'trainer/speaking.html')
+ 
+def generate_speaking_statement(request):
+     """Generates a statement for speaking practice using Gemini."""
+     prompt = """Act as an English teacher. Generate a simple, short, and common sentence for a student to speak for communication practice.
+     the sentence should be used to check the pronunication of the user, avoid preamble and avoid printing like this for example [student's name],[candidate's name],[user's name]"""
+     try:
+         response = model.generate_content(prompt)
+         statement = response.text.strip()
+          # Clean the statement 
+         statement = re.sub(r'#.*', '', statement).strip()
+         return JsonResponse({'statement': statement})
+     except Exception as e:
+         print("Error generating speaking statement:", e)
+         return JsonResponse({'error': 'Failed to generate statement.'}, status=500)
