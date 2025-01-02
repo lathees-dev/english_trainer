@@ -24,4 +24,6 @@ urlpatterns = [
     path('tenses/', views.tenses, name='tenses'),
     path('verbs_adverbs/', views.verbs_adverbs, name='verbs_adverbs'),
     path('adjectives/', views.adjectives, name='adjectives'),
-    ]
+    path('mock_test/<str:exercise_type>/', views.mock_test, name='mock_test'),
+    path('mock_test_submit/<str:exercise_type>/', views.handle_mock_test_submit, name='mock_test_submit'),
+ ]

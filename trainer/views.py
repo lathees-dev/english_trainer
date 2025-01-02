@@ -548,3 +548,71 @@ def generate_speaking_statement(request):
      except Exception as e:
          print("Error generating speaking statement:", e)
          return JsonResponse({'error': 'Failed to generate statement.'}, status=500)
+     
+def mock_test(request, exercise_type):
+     """Handles generating and rendering mock tests."""
+     num_questions = 15  # Set the number of questions for the mock test
+     questions = []
+
+     # Generate Questions
+     for _ in range(num_questions):
+         question_data = generate_question(exercise_type)
+         if question_data:
+             questions.append(question_data)
+
+     if not questions:
+         return render(request, 'trainer/mock_test.html', {'error': 'Could not generate mock test questions. Please try again.'})
+
+     # Initialize session data for keeping the score.
+     request.session['mock_test_results'] = {
+         'exercise_type': exercise_type,
+         'current_question': 0,
+         'total_marks': 0,
+         'questions': questions
+     }
+     return render(request, 'trainer/mock_test.html', {
+         'exercise_type': exercise_type,
+         'questions': questions,  # Pass the list of questions
+         'current_question_number': 1,
+         'total_questions': num_questions,
+     })
+     
+def handle_mock_test_submit(request, exercise_type):
+       """Handles processing the answer and result for the mock test"""
+       if request.method == "POST":
+           selected_option = request.POST.get('selected_option')
+           session_data = request.session.get('mock_test_results')
+           if not session_data:  # Check if session data is present
+             return render(request, 'trainer/mock_test.html', {'error': "Session Expired! Please start again."})
+           current_question_index = session_data['current_question']
+           total_marks = session_data['total_marks']
+           questions = session_data['questions']
+
+           if current_question_index >= len(questions):  # Check if current_question_index is valid
+             return render(request, 'trainer/mock_test.html', {'error': "Test Completed! Result is unavailable."})
+
+           current_question = questions[current_question_index]
+
+           if selected_option == current_question.get("correct_answer"):
+              total_marks += 1
+
+           session_data['total_marks'] = total_marks
+           current_question_index += 1
+           session_data['current_question'] = current_question_index
+           request.session['mock_test_results'] = session_data
+
+           if current_question_index < len(questions):
+              return render(request, 'trainer/mock_test.html', {
+                   'exercise_type': exercise_type,
+                    'questions': questions,
+                   'current_question_number': current_question_index + 1,
+                     'total_questions': len(questions),
+                })
+           else:
+               # Clean up session for good practice
+               del request.session['mock_test_results']
+               return render(request, 'trainer/mock_test_result.html', {
+                     'exercise_type': exercise_type,
+                    'total_marks': total_marks,
+                     'total_questions': len(questions),
+                })
