@@ -21,6 +21,12 @@ def home(request):
 def grammar_options(request):
     return render(request, 'trainer/grammar_options.html')
 
+def vocab_options(request):
+    return render(request, 'trainer/vocab_options.html')
+
+def vocab_learn(request):
+    return render(request, 'trainer/v_learn.html')
+
 def exercise_options(request, exercise_type):
     context = {'exercise_type': exercise_type}
     return render(request, 'trainer/exercise_options.html', context)
@@ -83,6 +89,19 @@ def generate_question(question_type):
                 "options": ["She said that she was going to the market.", "She said she is going to the market.", "She said she will go to the market.", "She told that she is going to the market."],
                 "correct_answer": "She said that she was going to the market."
             }
+    
+        """
+        
+    elif question_type == 'vocabulary':  # New vocabulary question type
+        prompt = """
+          Act as an English teacher. Generate a multiple-choice question to test vocabulary knowledge.
+          Provide a sentence with a missing word and multiple options, ensuring the correct answer is a commonly used word in English vocabulary.
+          Generate a question in the below JSON format:
+          {
+              "sentence": "The chef prepared a _____ meal for the guests.",
+              "options": ["delicious", "happy", "angry", "unprepared"],
+              "correct_answer": "delicious"
+          }
         """
 
     else:
@@ -119,6 +138,7 @@ def generate_question(question_type):
     except Exception as e:
         print("Unexpected error:", e)
         return None
+
 
 def handle_post_request(request, question_type):
     action = request.POST.get('action')
@@ -174,6 +194,126 @@ def direct_indirect(request):
     question_data = generate_question('direct_indirect')
     return render(request, 'trainer/direct_indirect.html', {'question': question_data})
 
+
+def vocabulary(request):
+    if request.method == "POST":
+        return handle_post_request(request, "vocabulary")  # Use helper
+    question_data = generate_question("vocabulary")
+    return render(request, "trainer/vocabulary.html", {"question": question_data})
+
+
 def learn_exercise(request, exercise_type):
     template_name = f"trainer/L_{exercise_type.capitalize()}.html"
     return render(request, template_name)
+
+def generate_fillup_question(question_type):
+    if question_type == 'preposition':
+        prompt = """Act as an English teacher. Generate a fill-in-the-blank question to test the knowledge of prepositions.
+            Provide a sentence with a blank for the preposition.
+            Generate a question in the below JSON format: for example 
+            {
+                "sentence": "The cat is sitting _____ the table.",
+                "answer": "on"
+            }"""
+
+    elif question_type == 'articles':
+        prompt = """Act as an English teacher. Generate a fill-in-the-blank question to test the knowledge of articles.
+            Provide a sentence with a blank for the article.
+            Generate a question in the below JSON format: for example 
+            {
+                "sentence": "I have ___ dog.",
+                "answer": "a"
+            }"""
+    elif question_type == 'sentence_formation':
+        prompt = """
+        Act as an English teacher. Generate a fill-in-the-blank question to test the knowledge of sentence formation.
+        Provide a sentence with a blank where the student needs to arrange the words to correct the sentence.
+            Generate a question in the below JSON format: for example 
+            {
+                "sentence": "Arrange the words to form a correct sentence: watch / likes / he / every / movies / weekend / to",
+                "answer": "He likes to watch movies every weekend."
+            }"""
+    elif question_type == 'active_passive':
+        prompt = """
+            Act as an English teacher. Generate a fill-in-the-blank question to test the knowledge of active and passive voice.
+            Provide a sentence in active or passive voice, with a blank where the student needs to fill with a word in active or passive voice.
+            Generate a question in the below JSON format: for example
+            {
+            "sentence": "The cake _____ by me.(eat)",  
+            "answer": "was eaten"
+            }
+        """
+    elif question_type == 'direct_indirect':
+        prompt = """
+            Act as an English teacher. Generate a fill-in-the-blank question to test the knowledge of direct and indirect speech.
+        Provide a sentence in direct speech and its corresponding indirect speech with a blank.
+        Ensure the output contains both the direct and indirect speech sentences on separate lines using a newline character '\\n'. The indirect speech sentence will have a blank to be filled.
+        Generate a question in the below JSON format: for example
+            {
+            "sentence": "Direct speech: She said, \\"I am studying now.\\"\\nIndirect speech: She said that she __________ studying then.",
+                "answer": "was"
+            }
+        """
+    else:
+        return None
+    
+    try:
+        response = model.generate_content(prompt)
+        raw_response = response.text.strip()
+        print("Debugging: Raw Fillup Response Text:", raw_response)
+
+        # Clean up improper quotes in the JSON
+        cleaned_response = re.sub(r'#.*', '', raw_response).strip()
+
+        cleaned_response = re.sub(r'(?<!\\)"(.*?)"(?![:,])', r'"\1"', raw_response)
+
+        cleaned_response = cleaned_response.replace('\\n', '').strip()    
+        # Ensure valid JSON format
+        cleaned_response = cleaned_response.replace('""', '"').strip()
+
+        # Parse JSON
+        question_data = json.loads(cleaned_response)
+
+        # Validate the structure
+        if not all(key in question_data for key in ("sentence", "answer")):
+            print("Invalid fill-up response structure:", question_data)
+            return None
+
+        print("Debugging: Parsed Fill-up Question Data:", question_data)
+        return question_data
+    except json.JSONDecodeError as e:
+        print("Error parsing fill-up response as JSON:", e)
+        print("Fill-up response text for debugging:", raw_response)
+        return None
+    except Exception as e:
+        print("Unexpected fill-up error:", e)
+        return None
+    
+def handle_fillup_post_request(request, question_type):
+        if request.method == 'POST':
+           action = request.POST.get('action')
+           question_data = None
+
+           if action == 'try_again':
+              try:
+                question_data = json.loads(request.POST.get('question', '{}'))
+                return render(request, f'trainer/fillup.html', {
+                    'question': question_data, 'message': "Try again!"
+                })
+              except json.JSONDecodeError:
+                  print("Error parsing 'question' data from POST.")
+                  question_data = generate_fillup_question(question_type)
+                  return render(request, f'trainer/fillup.html', {'question': question_data})
+           
+           elif action == 'next_question':
+                question_data = generate_fillup_question(question_type)
+           if question_data is None:
+              return render(request, f'trainer/fillup.html', {'question': None, 'error': "Could not generate fill-up question. Please try again."})
+           else:
+              return render(request, f'trainer/fillup.html', {'question': question_data})
+
+def fillup(request, question_type):
+        if request.method == 'POST':
+             return handle_fillup_post_request(request,question_type)
+        question_data = generate_fillup_question(question_type)
+        return render(request, 'trainer/fillup.html', {'question': question_data})

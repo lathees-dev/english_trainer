@@ -17,5 +17,6 @@ from django.contrib import admin
 from django.urls import path ,include
 
 urlpatterns = [
-    path('', include('trainer.urls')),
+    path("", include("trainer.urls")),
+    path("", include("interview.urls")),
 ]
