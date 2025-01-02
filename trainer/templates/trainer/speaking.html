@@ -80,7 +80,7 @@
      {% if question %}
         <p class="question">{{ question.sentence }}</p>
             <input type="text" class="answer-input" id="userAnswer" placeholder="Your answer">
-            <button class="submit-button" onclick="checkAnswer('{{ question.answer }}')">Submit</button>
+            <button class="submit-button" onclick="checkAnswer('{{ question.answer }}', '{{ question.explanation|escapejs }}')">Submit</button>
         {% endif %}
         <div class="message"></div>
 
@@ -99,36 +99,32 @@
         </div>
    </div>
     <script>
-        function checkAnswer(correctAnswer) {
-            const userAnswer = document.getElementById('userAnswer').value.trim();
-            const messageDiv = document.querySelector('.message');
+        function checkAnswer(correctAnswer, explanation) {
+             const userAnswer = document.getElementById('userAnswer').value.trim();
+             const messageDiv = document.querySelector('.message');
+             const actionsDiv = document.querySelector('.actions');
+             const tryAgainForm = document.getElementById('try-again-form');
+           if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                 messageDiv.innerHTML = `Correct! Great job!<br><br>Explanation: ${explanation}`;
+                actionsDiv.style.display = "block";
+                 tryAgainForm.style.display = 'none';
+
+            } else {
+                messageDiv.innerHTML = `Wrong! The correct answer is '${correctAnswer}'.<br><br>Explanation: ${explanation}`;
+                actionsDiv.style.display = "block";
+             }
+            document.querySelector('.submit-button').disabled = true;
+        }
+
+       document.getElementById('try-again-form').addEventListener('submit', function (event) {
+           event.preventDefault();
+           const messageDiv = document.querySelector('.message');
+            messageDiv.textContent = "";
             const actionsDiv = document.querySelector('.actions');
-            const tryAgainForm = document.getElementById('try-again-form');
-            const explanation = '{{ question.explanation|escapejs }}'
-            
-            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-                            messageDiv.innerHTML = `Correct! Great job!<br><br>Explanation: ${explanation}`;
-                           actionsDiv.style.display = "block";
-                            tryAgainForm.style.display = 'none';
-            
-                       } else {
-                           messageDiv.innerHTML = `Wrong! The correct answer is '${correctAnswer}'.<br><br>Explanation: ${explanation}`;
-                           actionsDiv.style.display = "block";
-                        }
-                       document.querySelector('.submit-button').disabled = true;
-                   }
-            
-                  document.getElementById('try-again-form').addEventListener('submit', function (event) {
-                      event.preventDefault();
-                      const messageDiv = document.querySelector('.message');
-                       messageDiv.textContent = "";
-                       const actionsDiv = document.querySelector('.actions');
-                       actionsDiv.style.display = "none";
-                       document.querySelector('.submit-button').disabled = false;
-                       document.getElementById('userAnswer').value = '';
-            
-            
-                   });
-               </script>
+            actionsDiv.style.display = "none";
+            document.querySelector('.submit-button').disabled = false;
+            document.getElementById('userAnswer').value = '';
+        });
+    </script>
 </body>
 </html>

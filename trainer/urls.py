@@ -15,4 +15,13 @@ urlpatterns = [
     path('direct_indirect/', views.direct_indirect, name='direct_indirect'),
     path('learn/<str:exercise_type>/', views.learn_exercise, name='learn_exercise'),
     path('fillup/<str:question_type>/', views.fillup, name='fillup'),
+    path('speaking/', views.speaking, name='speaking'),
+    path('generate_speaking_statement/', views.generate_speaking_statement, name='generate_speaking_statement'),
+    path('conjunctions/', views.conjunctions, name='conjunctions'),
+    path('interjections/', views.interjections, name='interjections'),
+    path('nouns/', views.nouns, name='nouns'),
+    path('pronouns/', views.pronouns, name='pronouns'),
+    path('tenses/', views.tenses, name='tenses'),
+    path('verbs_adverbs/', views.verbs_adverbs, name='verbs_adverbs'),
+    path('adjectives/', views.adjectives, name='adjectives'),
     ]
