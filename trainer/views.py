@@ -6,6 +6,10 @@ from django.shortcuts import render
 from django.http import JsonResponse
 import json
 import re
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from pymongo import MongoClient
+import bcrypt
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -13,6 +17,51 @@ logger = logging.getLogger(__name__)
 # Configure the Gemini API with an environment variable
 genai.configure(api_key="AIzaSyBQhTgdeffYLYsH726KgHtvtF0i1YLjQ80")
 model = genai.GenerativeModel("models/gemini-1.0-pro")
+
+
+# MongoDB connection
+client = MongoClient("mongodb://localhost:27017/")
+db = client["english_trainer"]
+collection = db["users"]
+
+
+# Signup view
+def signup(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        
+        # Check if user exists
+        if collection.find_one({"username": username}):
+            messages.error(request, "Username already exists!")
+            return redirect("signup")
+        
+        # Hash the password and save user
+        hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        collection.insert_one({"username": username, "password": hashed_pw})
+        messages.success(request, "Signup successful! Please login.")
+        return redirect("login")
+
+    return render(request, "trainer/signup.html")
+
+
+# Login view
+def login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        # Find user in MongoDB
+        user = collection.find_one({"username": username})
+        if user and bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+            messages.success(request, "Login successful!")
+            return redirect("home")  # Replace with your home view
+        else:
+            messages.error(request, "Invalid credentials!")
+            return redirect("login")
+
+    return render(request, "trainer/login.html")
+
 
 def home(request):
     """Renders the home page."""
@@ -501,7 +550,7 @@ def generate_fillup_question(question_type):
     except Exception as e:
         print("Unexpected fill-up error:", e)
         return None
-    
+
 def handle_fillup_post_request(request, question_type):
         if request.method == 'POST':
            action = request.POST.get('action')

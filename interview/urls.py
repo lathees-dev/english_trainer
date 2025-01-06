@@ -4,7 +4,7 @@ from django.urls import path, include
 from . import views
 app_name = 'interview'
 urlpatterns = [
-    path('home/', views.home, name='home'),
+    path('interview_home/', views.interview_home, name='interview_home'),
     path('ai_interview_options/', views.ai_interview_options, name='ai_interview_options'),
     path('mixed_interview/', views.mixed_interview, name='mixed_interview'),
     path('technical_interview/', views.technical_interview, name='technical_interview'),
